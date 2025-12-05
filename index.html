@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Album Collection Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Mini-Game Modal -->
+    <div id="minigame-modal" class="modal">
+        <div class="modal-content">
+            <h2>Quick Mini-Game</h2>
+            <div class="minigame-counter" id="minigame-counter">10</div>
+            <p>Click as fast as you can!</p>
+            <button id="minigame-click" class="minigame-button">CLICK ME!</button>
+            <p id="minigame-result" class="minigame-result"></p>
+            <button id="close-minigame" class="modal-close-button">Close</button>
+        </div>
+    </div>
+
+    <!-- Shop Modal -->
+    <div id="shop-modal" class="modal">
+        <div class="modal-content shop-modal">
+            <h2>Card Shop</h2>
+            <div id="shop-cards" class="shop-cards-container"></div>
+            <button id="close-shop" class="modal-close-button">Close</button>
+        </div>
+    </div>
+    <!-- Modal Card Details -->
+    <div id="card-detail-modal" class="modal">
+    <div class="modal-content" style="max-width: 400px;">
+        <h2 id="card-detail-name">Card Name</h2>
+        <div id="card-detail-preview" style="margin: 20px auto; width: 100px; height: 150px;"></div>
+        <div id="card-detail-stats" style="text-align: left; margin: 20px 0;">
+            <p><strong>Power:</strong> <span id="card-detail-power">0</span></p>
+            <p><strong>Faction:</strong> <span id="card-detail-faction">Unknown</span></p>
+            <p><strong>Rarity:</strong> <span id="card-detail-rarity">Common</span></p>
+            <p><strong>Type:</strong> <span id="card-detail-type">Standard</span></p>
+        </div>
+        <button id="close-card-detail" class="modal-close-button">Close</button>
+    </div>
+</div>
+    <!-- Modal Overlay -->
+    <div id="modal-overlay" class="modal-overlay"></div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Left Column: Stats, Economy, Tasks -->
+        <div class="left-column">
+            <!-- Stats Section -->
+            <div class="stats-section card-panel">
+                <h1>Power Stats</h1>
+                <div id="total-power-stats">
+                    <p>Total Power: <strong id="stat-total-power">0</strong></p>
+                    <p>Total Boost: <strong id="stat-total-boost">0%</strong></p>
+                </div>
+            </div>
+
+            <!-- Economy Section -->
+            <div class="economy-section card-panel">
+                <h2>Economy</h2>
+                <div class="economy-controls">
+                    <div class="gold-display">
+                        <h3>Gold: <span id="gold-count">100</span> 🪙</h3>
+                    </div>
+                    <div class="economy-buttons">
+                        <button id="buy-random-card" class="economy-button buy-button">
+                            Buy Random Card (50 gold)
+                        </button>
+                        <button id="play-minigame" class="economy-button play-button">
+                            Play Mini-Game (Free)
+                        </button>
+                        <button id="open-shop" class="economy-button shop-button">
+                            Open Shop
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Daily Tasks Section -->
+            <div class="tasks-section card-panel">
+                <h2>Daily Tasks</h2>
+                <div id="tasks-list" class="tasks-list">
+                    <!-- Tasks will be generated here -->
+                </div>
+                <p class="daily-reset">Resets in: <span id="reset-timer">24:00:00</span></p>
+            </div>
+        </div>
+
+        <!-- Right Column: Album -->
+        <div class="right-column">
+            <div class="album-section card-panel">
+                <h2>Album</h2>
+                <div class="quadrant-grid">
+                    <div class="quadrant" id="quadrant-1">
+                        <span class="quadrant-label">Q1</span>
+                        <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
+                        <div class="card-slot"></div><div class="card-slot"></div>
+                    </div>
+                    <div class="quadrant" id="quadrant-2">
+                        <span class="quadrant-label">Q2</span>
+                        <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
+                        <div class="card-slot"></div><div class="card-slot"></div>
+                    </div>
+                    <div class="quadrant" id="quadrant-3">
+                        <span class="quadrant-label">Q3</span>
+                        <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
+                        <div class="card-slot"></div><div class="card-slot"></div>
+                    </div>
+                    <div class="quadrant" id="quadrant-4">
+                        <span class="quadrant-label">Q4</span>
+                        <div class="card-slot"></div><div class="card-slot"></div><div class="card-slot"></div>
+                        <div class="card-slot"></div><div class="card-slot"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory Section -->
+            <div class="inventory-section card-panel">
+                <h2>Inventory</h2>
+                <div class="inventory-bar" id="inventory-bar">
+                    <!-- Cards generated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
