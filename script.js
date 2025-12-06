@@ -4,17 +4,17 @@
 
 // Card templates (initial cards)
 const cardTemplates = [
-    { templateId: 't1', cardType: 'cardA', name: 'Card A', power: 10, faction: 'Fire' },
-    { templateId: 't2', cardType: 'cardB', name: 'Card B', power: 12, faction: 'Fire' },
-    { templateId: 't7', cardType: 'cardG', name: 'Card G', power: 5, faction: 'Fire' },
-    { templateId: 't8', cardType: 'cardH', name: 'Card H', power: 3, faction: 'Fire' },
-    { templateId: 't9', cardType: 'cardI', name: 'Card I', power: 7, faction: 'Fire' },
-    { templateId: 't3', cardType: 'cardC', name: 'Card C', power: 8, faction: 'Water' },
-    { templateId: 't4', cardType: 'cardD', name: 'Card D', power: 15, faction: 'Earth' },
-    { templateId: 't5', cardType: 'cardE', name: 'Card E', power: 9, faction: 'Wind' },
-    { templateId: 't6', cardType: 'cardF', name: 'Card F', power: 16, faction: 'Fire' },
-    { templateId: 't1-copy', cardType: 'cardA', name: 'Card A Copy', power: 10, faction: 'Fire' },            
-    { templateId: 't2-copy', cardType: 'cardB', name: 'Card B Copy', power: 12, faction: 'Fire' },
+    { templateId: 't1', name: 'Card A', power: 10, faction: 'Fire' },
+    { templateId: 't2', name: 'Card B', power: 12, faction: 'Fire' },
+    { templateId: 't7', name: 'Card G', power: 5, faction: 'Fire' },
+    { templateId: 't8', name: 'Card H', power: 3, faction: 'Fire' },
+    { templateId: 't9', name: 'Card I', power: 7, faction: 'Fire' },
+    { templateId: 't3', name: 'Card C', power: 8, faction: 'Water' },
+    { templateId: 't4', name: 'Card D', power: 15, faction: 'Earth' },
+    { templateId: 't5', name: 'Card E', power: 9, faction: 'Wind' },
+    { templateId: 't6', name: 'Card F', power: 16, faction: 'Fire' },
+    { templateId: 't1-copy', name: 'Card A Copy', power: 10, faction: 'Fire' },            
+    { templateId: 't2-copy', name: 'Card B Copy', power: 12, faction: 'Fire' },
 ];
 
 // Game state
@@ -23,8 +23,6 @@ let draggedId = null;
 let minigameClicks = 0;
 let minigameTarget = 10;
 let minigameTimer = null;
-let currentSort = 'power-desc';
-let showAvailableOnly = false;
 
 const gameState = {
     dailyTasks: [],
@@ -44,23 +42,14 @@ const dailyTasksTemplates = [
 
 function generateCommonCard() {
     const factions = ['Fire', 'Water', 'Earth', 'Wind'];
-    const cardTypes = [
-        { name: 'Basic', typeId: 'basic' },
-        { name: 'Simple', typeId: 'simple' },
-        { name: 'Common', typeId: 'common' },
-        { name: 'Standard', typeId: 'standard' },
-        { name: 'Ordinary', typeId: 'ordinary' }
-    ];
-    
+    const commonNames = ['Basic', 'Simple', 'Common', 'Standard', 'Ordinary'];
     const randomFaction = factions[Math.floor(Math.random() * factions.length)];
-    const randomType = cardTypes[Math.floor(Math.random() * cardTypes.length)];
     const randomPower = Math.floor(Math.random() * 10) + 1;
     const uniqueId = 'common-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
     
     return {
         templateId: uniqueId,
-        cardType: `${randomType.typeId}_${randomFaction.toLowerCase()}`,
-        name: `${randomType.name} ${randomFaction}`,
+        name: `${commonNames[Math.floor(Math.random() * commonNames.length)]} ${randomFaction}`,
         power: randomPower,
         faction: randomFaction,
         rarity: 'common'
@@ -69,31 +58,22 @@ function generateCommonCard() {
 
 function generateShopCard() {
     const factions = ['Fire', 'Water', 'Earth', 'Wind'];
-    const cardTypes = [
-        { name: 'Mystic', typeId: 'mystic' },
-        { name: 'Ancient', typeId: 'ancient' },
-        { name: 'Crystal', typeId: 'crystal' },
-        { name: 'Spectral', typeId: 'spectral' },
-        { name: 'Royal', typeId: 'royal' },
-        { name: 'Enchanted', typeId: 'enchanted' }
-    ];
-    
+    const names = ['Mystic', 'Ancient', 'Crystal', 'Spectral', 'Royal', 'Enchanted'];
     const randomFaction = factions[Math.floor(Math.random() * factions.length)];
-    const randomType = cardTypes[Math.floor(Math.random() * cardTypes.length)];
     
-    // Determine rarity
+    // Determine rarity with probabilities
     const rarityRoll = Math.random();
     let rarity, powerMultiplier, costMultiplier;
     
-    if (rarityRoll < 0.6) {
+    if (rarityRoll < 0.6) { // 60% common
         rarity = 'common';
         powerMultiplier = 1;
         costMultiplier = 1;
-    } else if (rarityRoll < 0.9) {
+    } else if (rarityRoll < 0.9) { // 30% rare
         rarity = 'rare';
         powerMultiplier = 1.5;
         costMultiplier = 2;
-    } else {
+    } else { // 10% epic
         rarity = 'epic';
         powerMultiplier = 2;
         costMultiplier = 3;
@@ -105,8 +85,7 @@ function generateShopCard() {
     
     return {
         templateId: uniqueId,
-        cardType: `${randomType.typeId}_${randomFaction.toLowerCase()}_${rarity}`,
-        name: `${randomType.name} ${randomFaction}`,
+        name: `${names[Math.floor(Math.random() * names.length)]} ${randomFaction}`,
         power: randomPower,
         faction: randomFaction,
         cost: Math.floor(randomPower * 2 * costMultiplier) + 20,
@@ -118,57 +97,20 @@ function generateShopCard() {
 // RENDERING FUNCTIONS
 // ====================
 
-function showCardDetail(cardData) {
-    document.getElementById('card-detail-name').textContent = cardData.name;
-    document.getElementById('card-detail-power').textContent = cardData.power;
-    document.getElementById('card-detail-faction').textContent = cardData.faction;
-    document.getElementById('card-detail-rarity').textContent = cardData.rarity || 'Common';
-    document.getElementById('card-detail-type').textContent = cardData.cardType || 'Standard';
-    
-    // Create card preview
-    const preview = document.getElementById('card-detail-preview');
-    preview.innerHTML = '';
-    const cardElement = document.createElement('div');
-    cardElement.className = `card faction-${cardData.faction} ${cardData.rarity || ''}`;
-    cardElement.style.width = '100px';
-    cardElement.style.height = '150px';
-    cardElement.style.transform = 'scale(1.5)';
-    cardElement.innerHTML = `
-        <div style="font-size: 1.2em; font-weight: bold;">${cardData.power}</div>
-        <div style="font-size: 0.8em;">${cardData.faction}</div>
-    `;
-    preview.appendChild(cardElement);
-    
-    showModal('card-detail-modal');
-}
-
 function renderInventory() {
     const inventoryBar = document.getElementById('inventory-bar');
     inventoryBar.innerHTML = '';
-    // Get sorted cards
-    const sortedCards = sortCardsForDisplay();
-    const cardsInAlbum = getCardsInAlbum();
-    
-    // Track if we need a separator
-    const hasCardsInAlbum = cardsInAlbum.size > 0;
-    const notInAlbumCount = sortedCards.filter(card => !cardsInAlbum.has(card.templateId)).length;
-    
-    sortedCards.forEach((cardData, displayIndex) => {
+
+    cardTemplates.forEach((cardData, index) => {
         const cardElement = document.createElement('div');
         cardElement.className = 'card';
-        cardElement.id = `instance-${cardData.originalIndex}`;
+        cardElement.id = `instance-${index}`;
         cardElement.dataset.templateId = cardData.templateId;
-        cardElement.dataset.cardType = cardData.cardType || cardData.name;
-        
-        // Add "in-album" class if card is already placed
-        if (cardsInAlbum.has(cardData.templateId)) {
-            cardElement.classList.add('in-album');
-        }
         
         // Add faction color class
         cardElement.classList.add(`faction-${cardData.faction}`);
         
-        // Add rarity class
+        // Add rarity class if exists
         if (cardData.rarity) {
             cardElement.classList.add(cardData.rarity);
         }
@@ -177,44 +119,25 @@ function renderInventory() {
         let raritySymbol = '';
         if (cardData.rarity === 'rare') raritySymbol = '⭐';
         else if (cardData.rarity === 'epic') raritySymbol = '🌟';
+        else if (cardData.rarity === 'legendary') raritySymbol = '🔥';
         
         // Card content
         cardElement.innerHTML = `
-            <div style="font-weight: bold; font-size: 1.1em;">${cardData.power}</div>
-            <div style="font-size: 0.6em; margin-top: 2px;">${cardData.faction}</div>
-            ${raritySymbol ? `<div style="font-size: 0.5em; margin-top: 3px;">${raritySymbol}</div>` : ''}
+            <div>${cardData.power}</div>
+            <div style="font-size: 0.6em;">${cardData.faction}</div>
+            ${raritySymbol ? `<div style="font-size: 0.5em; margin-top: 2px;">${raritySymbol}</div>` : ''}
         `;
         
         // Card tooltip
-        const location = cardsInAlbum.has(cardData.templateId) ? ' (In Album)' : ' (Available)';
-        cardElement.title = `${cardData.name}${location}\nPower: ${cardData.power}\nFaction: ${cardData.faction}${cardData.rarity ? `\nRarity: ${cardData.rarity}` : ''}`;        
+        cardElement.title = `${cardData.name}\nPower: ${cardData.power}\nFaction: ${cardData.faction}${cardData.rarity ? `\nRarity: ${cardData.rarity}` : ''}`;
+        
         // Drag and drop
         cardElement.draggable = true;
         cardElement.addEventListener('dragstart', handleDragStart);
         cardElement.addEventListener('dragend', handleDragEnd);
         
-        // Click for card details (if you implement this later)
-        cardElement.addEventListener('click', (e) => {
-            if (e.target === cardElement) {
-                // You can add card detail modal here if needed
-                console.log('Card clicked:', cardData);
-            }
-        });
         inventoryBar.appendChild(cardElement);
-        
-        // Add separator between available and in-album cards
-        if (hasCardsInAlbum && displayIndex === notInAlbumCount - 1 && notInAlbumCount > 0) {
-            const separator = document.createElement('div');
-            separator.className = 'inventory-separator';
-            inventoryBar.appendChild(separator);
-        }
     });
-    
-    // Update scroll indicators
-    updateScrollIndicators();
-    
-    // Update inventory count
-    updateInventoryCount();
 }
 
 function renderTasks() {
@@ -241,251 +164,6 @@ function renderTasks() {
         tasksList.appendChild(taskElement);
     });
 }
-// ====================
-// HELPER FUNCTIONS FOR QUADRANT VISUALS
-// ====================
-
-// Helper to clean up all quadrant visuals
-function cleanQuadrantVisuals(quadrant) {
-    // Remove all classes
-    quadrant.classList.remove('bonus-active');
-    quadrant.classList.remove('has-duplicate');
-    
-    // Remove all indicators
-    const indicators = quadrant.querySelectorAll('.bonus-indicator, .duplicate-warning');
-    indicators.forEach(indicator => indicator.remove());
-}
-
-// Helper to show bonus indicator
-function showQuadrantBonus(quadrant, boostMultiplier, isSameFaction = false) {
-    quadrant.classList.add('bonus-active');
-    
-    const bonusIndicator = document.createElement('div');
-    bonusIndicator.className = 'bonus-indicator';
-    bonusIndicator.textContent = `+${(boostMultiplier * 100)}%`;
-    bonusIndicator.title = isSameFaction 
-        ? 'All different cards & same faction +5%' 
-        : 'All different cards +2%';
-    quadrant.appendChild(bonusIndicator);
-}
-
-// Helper to show warning indicator
-function showQuadrantWarning(quadrant, text, tooltip) {
-    quadrant.classList.add('has-duplicate');
-    
-    const warning = document.createElement('div');
-    warning.className = 'duplicate-warning';
-    warning.textContent = text;
-    warning.title = tooltip;
-    quadrant.appendChild(warning);
-}
-
-// Helper function to get cards currently placed in album
-function getCardsInAlbum() {
-    const cardsInAlbum = new Set();
-    
-    document.querySelectorAll('.quadrant .card').forEach(cardEl => {
-        const templateId = cardEl.dataset.templateId;
-        cardsInAlbum.add(templateId);
-    });
-    
-    return cardsInAlbum;
-}
-
-// ====================
-// INVENTORY IMPROVEMENTS
-// ====================
-
-// Update inventory count display
-function updateInventoryCount() {
-    const cardsInAlbum = getCardsInAlbum();
-    const availableCount = cardTemplates.filter(card => !cardsInAlbum.has(card.templateId)).length;
-    document.getElementById('available-count').textContent = availableCount;
-    
-    // Update the full inventory count text
-    const totalCards = cardTemplates.length;
-    const inAlbumCount = cardsInAlbum.size;
-    document.getElementById('inventory-count').textContent = 
-        `(${availableCount} available, ${inAlbumCount} in album, ${totalCards} total)`;
-}
-
-// Smart card sorting function
-function sortCardsForDisplay() {
-    const cardsInAlbum = getCardsInAlbum();
-    
-    // Filter cards if "Show Available Only" is enabled
-    let cardsToDisplay = [...cardTemplates];
-    if (showAvailableOnly) {
-        cardsToDisplay = cardsToDisplay.filter(card => !cardsInAlbum.has(card.templateId));
-    }
-    
-    // Separate cards into two groups
-    const notInAlbum = [];
-    const alreadyInAlbum = [];
-    
-    cardsToDisplay.forEach((card, originalIndex) => {
-        const cardWithIndex = { ...card, originalIndex };
-        
-        if (cardsInAlbum.has(card.templateId)) {
-            alreadyInAlbum.push(cardWithIndex);
-        } else {
-            notInAlbum.push(cardWithIndex);
-        }
-    });
-    
-    // Define sorting functions
-    const sortFunctions = {
-        'power-desc': (a, b) => b.power - a.power,
-        'power-asc': (a, b) => a.power - b.power,
-        'faction': (a, b) => {
-            const factions = ['Fire', 'Water', 'Earth', 'Wind'];
-            const factionDiff = factions.indexOf(a.faction) - factions.indexOf(b.faction);
-            return factionDiff !== 0 ? factionDiff : b.power - a.power;
-        },
-        'rarity': (a, b) => {
-            const rarityOrder = { 'epic': 3, 'rare': 2, 'common': 1, undefined: 0 };
-            const rarityDiff = (rarityOrder[b.rarity] || 0) - (rarityOrder[a.rarity] || 0);
-            return rarityDiff !== 0 ? rarityDiff : b.power - a.power;
-        }
-    };
-    
-    // Get the current sort function
-    const sortFunction = sortFunctions[currentSort] || sortFunctions['power-desc'];
-    
-    // Sort each group
-    notInAlbum.sort(sortFunction);
-    alreadyInAlbum.sort(sortFunction);
-    
-    // Return combined array (available first, then in-album)
-    return [...notInAlbum, ...alreadyInAlbum];
-}
-
-// Update scroll indicators
-function updateScrollIndicators() {
-    const inventoryBar = document.getElementById('inventory-bar');
-    const leftIndicator = document.querySelector('.left-indicator');
-    const rightIndicator = document.querySelector('.right-indicator');
-    const scrollHint = document.getElementById('scroll-hint');
-    
-    if (!inventoryBar || !leftIndicator || !rightIndicator) return;
-    
-    const isAtStart = inventoryBar.scrollLeft <= 10;
-    const isAtEnd = inventoryBar.scrollLeft + inventoryBar.clientWidth >= inventoryBar.scrollWidth - 10;
-    
-    // Show/hide indicators
-    leftIndicator.style.opacity = isAtStart ? '0' : '0.7';
-    rightIndicator.style.opacity = isAtEnd ? '0' : '0.7';
-    
-    // Update scroll hint
-    if (scrollHint) {
-        if (isAtStart && isAtEnd) {
-            scrollHint.style.display = 'none';
-        } else {
-            scrollHint.style.display = 'block';
-            if (isAtStart) {
-                scrollHint.textContent = '→ Scroll for more cards →';
-            } else if (isAtEnd) {
-                scrollHint.textContent = '← Scroll for more cards ←';
-            } else {
-                scrollHint.textContent = '← Scroll to see all cards →';
-            }
-        }
-    }
-}
-
-// Initialize sorting controls
-function initSortingControls() {
-    // Power sort button (toggles between desc and asc)
-    document.getElementById('sort-by-power').addEventListener('click', () => {
-        if (currentSort === 'power-desc') {
-            currentSort = 'power-asc';
-            document.querySelector('#sort-by-power .sort-arrow').textContent = '⬆';
-        } else {
-            currentSort = 'power-desc';
-            document.querySelector('#sort-by-power .sort-arrow').textContent = '⬇';
-        }
-        
-        // Update active state
-        document.querySelectorAll('.sort-button').forEach(btn => btn.classList.remove('active'));
-        document.getElementById('sort-by-power').classList.add('active');
-        
-        renderInventory();
-    });
-    
-    // Faction sort button
-    document.getElementById('sort-by-faction').addEventListener('click', () => {
-        currentSort = 'faction';
-        
-        // Update active state
-        document.querySelectorAll('.sort-button').forEach(btn => btn.classList.remove('active'));
-        document.getElementById('sort-by-faction').classList.add('active');
-        
-        renderInventory();
-    });
-    
-    // Rarity sort button
-    document.getElementById('sort-by-rarity').addEventListener('click', () => {
-        currentSort = 'rarity';
-        
-        // Update active state
-        document.querySelectorAll('.sort-button').forEach(btn => btn.classList.remove('active'));
-        document.getElementById('sort-by-rarity').classList.add('active');
-        
-        renderInventory();
-    });
-    
-    // Show available only toggle
-    document.getElementById('show-available-only').addEventListener('click', () => {
-        showAvailableOnly = !showAvailableOnly;
-        
-        // Update button text
-        const button = document.getElementById('show-available-only');
-        const textSpan = button.querySelector('.sort-text');
-        textSpan.textContent = showAvailableOnly ? 'Show All' : 'Show Available';
-        
-        // Toggle active state
-        button.classList.toggle('active', showAvailableOnly);
-        
-        renderInventory();
-    });
-    
-    // Scroll indicators click handlers
-    document.querySelector('.left-indicator').addEventListener('click', () => {
-        const inventoryBar = document.getElementById('inventory-bar');
-        inventoryBar.scrollBy({ left: -200, behavior: 'smooth' });
-    });
-    
-    document.querySelector('.right-indicator').addEventListener('click', () => {
-        const inventoryBar = document.getElementById('inventory-bar');
-        inventoryBar.scrollBy({ left: 200, behavior: 'smooth' });
-    });
-    
-    // Update indicators on scroll
-    document.getElementById('inventory-bar').addEventListener('scroll', updateScrollIndicators);
-    
-    // Initial update
-    updateScrollIndicators();
-}
-
-// Update your existing initialization
-document.addEventListener('DOMContentLoaded', () => {
-    // Your existing initialization code...
-    
-    // Add new initialization after your existing setup
-    initSortingControls();
-    updateInventoryCount();
-    
-    // Update inventory count whenever stats update
-    const originalUpdateStats = updateStats;
-    updateStats = function() {
-        originalUpdateStats();
-        updateInventoryCount();
-        renderInventory(); // Re-render to update "in-album" status
-    };
-    
-    // Initial render
-    renderInventory();
-});
 
 // ====================
 // DRAG & DROP FUNCTIONS
@@ -556,77 +234,76 @@ function updateStats() {
     let totalPowerSum = 0;
     let totalBoostPercent = 0;
 
+    // Reset all quadrant bonuses
+    document.querySelectorAll('.quadrant').forEach(quadrant => {
+        quadrant.classList.remove('bonus-active');
+        const existingIndicator = quadrant.querySelector('.bonus-indicator');
+        if (existingIndicator) existingIndicator.remove();
+    });
+
     // Calculate stats for each quadrant
     document.querySelectorAll('.quadrant').forEach(quadrant => {
         const cardsInQuadrant = quadrant.querySelectorAll('.card');
-        let quadrantPower = 0;
-        let quadrantBoost = 0;
         
-        // Clean up previous visuals FIRST
-        cleanQuadrantVisuals(quadrant);
-        
-        // Calculate base power
-        cardsInQuadrant.forEach(cardEl => {
-            const templateId = cardEl.dataset.templateId;
-            const cardData = cardTemplates.find(item => item.templateId === templateId);
-            if (cardData) {
-                quadrantPower += cardData.power;
-            }
-        });
-        
-        // Check for bonuses if we have exactly 5 cards
         if (cardsInQuadrant.length === 5) {
-            const cardTypes = [];
+            let quadrantBasePower = 0;
+            const usedTemplateIds = [];
             const cardFactions = [];
-            
+
             // Collect card data
             cardsInQuadrant.forEach(cardEl => {
                 const templateId = cardEl.dataset.templateId;
                 const cardData = cardTemplates.find(item => item.templateId === templateId);
                 if (cardData) {
-                    cardTypes.push(cardData.cardType || cardData.name);
+                    quadrantBasePower += cardData.power;
+                    usedTemplateIds.push(cardData.templateId);
                     cardFactions.push(cardData.faction);
                 }
             });
-            
-            // Check for duplicates
-            const uniqueCardTypes = new Set(cardTypes);
-            const hasDuplicates = uniqueCardTypes.size < 5;
-            
-            if (hasDuplicates) {
-                // Show duplicate warning
-                showQuadrantWarning(quadrant, '⚠️ Duplicates', 'This quadrant has duplicate cards - no bonus applied');
-            } else {
-                // All cards are different - apply 2% bonus
-                quadrantBoost = 0.02;
+
+            let quadrantBoostMultiplier = 0;
+            let bonusText = '';
+
+            // Check for unique templates bonus
+            const areAllDifferentTemplates = new Set(usedTemplateIds).size === 5;
+            if (areAllDifferentTemplates) {
+                quadrantBoostMultiplier += 0.02;
+                bonusText += 'Unique +2%';
                 
-                // Check if all cards have SAME faction
+                // Check for same faction bonus
                 const firstFaction = cardFactions[0];
-                const allSameFaction = cardFactions.every(faction => faction === firstFaction);
-                
-                if (allSameFaction) {
-                    // Upgrade to 5% bonus for different cards + same faction
-                    quadrantBoost = 0.05;
-                }
-                
-                // Apply visual bonus
-                if (quadrantBoost > 0) {
-                    showQuadrantBonus(quadrant, quadrantBoost, allSameFaction);
-                    totalBoostPercent += (quadrantBoost * 100);
+                const areAllSameFaction = cardFactions.every(faction => faction === firstFaction);
+                if (areAllSameFaction) {
+                    quadrantBoostMultiplier += 0.03;
+                    bonusText += ' | Same Faction +3%';
                 }
             }
-        } else if (cardsInQuadrant.length > 5) {
-            // Too many cards warning
-            showQuadrantWarning(quadrant, '❌ Too many', 'Too many cards in this quadrant - remove some');
-        } else if (cardsInQuadrant.length > 0 && cardsInQuadrant.length < 5) {
-            // Optional: Show "incomplete" indicator
-            // Remove this if you don't want it
-            showQuadrantWarning(quadrant, `${cardsInQuadrant.length}/5`, 'Need 5 cards for bonus');
+
+            // Apply visual feedback
+            if (quadrantBoostMultiplier > 0) {
+                quadrant.classList.add('bonus-active');
+                
+                const bonusIndicator = document.createElement('div');
+                bonusIndicator.className = 'bonus-indicator';
+                bonusIndicator.textContent = `+${(quadrantBoostMultiplier * 100)}%`;
+                bonusIndicator.title = bonusText;
+                quadrant.appendChild(bonusIndicator);
+            }
+
+            const boostedPower = quadrantBasePower * (1 + quadrantBoostMultiplier);
+            totalPowerSum += boostedPower;
+            totalBoostPercent += (quadrantBoostMultiplier * 100);
+
+        } else {
+            // Add power of individual cards
+            cardsInQuadrant.forEach(cardEl => {
+                const templateId = cardEl.dataset.templateId;
+                const cardData = cardTemplates.find(item => item.templateId === templateId);
+                if (cardData) {
+                    totalPowerSum += cardData.power;
+                }
+            });
         }
-        
-        // Calculate final power
-        const boostedPower = quadrantPower * (1 + quadrantBoost);
-        totalPowerSum += boostedPower;
     });
 
     // Update display
@@ -635,13 +312,6 @@ function updateStats() {
     
     // Update task 3 progress
     updateTaskProgress('task3', 0);
-
-    updateInventoryCount();
-
-// And update the inventory display if cards might have moved
-    setTimeout(() => {
-        renderInventory();
-    }, 100);
 }
 
 // ====================
@@ -783,12 +453,11 @@ function openShop() {
             if (spendGold(card.cost)) {
                 // Add to inventory
                 cardTemplates.push({
-                    templateId: newCard.templateId,
-                    cardType: newCard.cardType, // ADD THIS LINE
-                    name: newCard.name,
-                    power: newCard.power,
-                    faction: newCard.faction,
-                    rarity: newCard.rarity
+                    templateId: card.templateId,
+                    name: card.name,
+                    power: card.power,
+                    faction: card.faction,
+                    rarity: card.rarity
                 });
                 
                 renderInventory();
