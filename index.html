@@ -117,12 +117,45 @@
             </div>
 
             <!-- Inventory Section -->
-            <div class="inventory-section card-panel">
-                <h2>Inventory</h2>
-                <div class="inventory-bar" id="inventory-bar">
-                    <!-- Cards generated here -->
-                </div>
-            </div>
+             this: -->
+<div class="inventory-section card-panel">
+    <h2>Inventory 
+        <span id="inventory-count" style="font-size: 0.8em; color: #666; font-weight: normal;">
+            (<span id="available-count">0</span> available)
+        </span>
+    </h2>
+    
+    <!-- Add inventory controls -->
+    <div class="inventory-controls">
+        <button id="sort-by-power" class="sort-button active" data-sort="power-desc">
+            <span class="sort-text">Power</span>
+            <span class="sort-arrow">⬇</span>
+        </button>
+        <button id="sort-by-faction" class="sort-button" data-sort="faction">
+            <span class="sort-text">Faction</span>
+        </button>
+        <button id="sort-by-rarity" class="sort-button" data-sort="rarity">
+            <span class="sort-text">Rarity</span>
+        </button>
+        <button id="show-available-only" class="sort-button">
+            <span class="sort-text">Show Available</span>
+        </button>
+    </div>
+    
+    <div class="inventory-bar-wrapper">
+        <div class="inventory-bar" id="inventory-bar">
+            <!-- Cards generated here -->
+        </div>
+        <!-- Scroll indicators -->
+        <div class="scroll-indicator left-indicator">◀</div>
+        <div class="scroll-indicator right-indicator">▶</div>
+    </div>
+    
+    <!-- Scroll hint -->
+    <div id="scroll-hint" style="text-align: center; margin-top: 10px; font-size: 0.8em; color: #666; display: none;">
+        ← Scroll to see more cards →
+    </div>
+</div>
         </div>
     </div>
 
