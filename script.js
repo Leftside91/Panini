@@ -23,6 +23,8 @@ let draggedId = null;
 let minigameClicks = 0;
 let minigameTarget = 10;
 let minigameTimer = null;
+let currentSort = 'power-desc';
+let showAvailableOnly = false;
 
 const gameState = {
     dailyTasks: [],
@@ -143,30 +145,30 @@ function showCardDetail(cardData) {
 function renderInventory() {
     const inventoryBar = document.getElementById('inventory-bar');
     inventoryBar.innerHTML = '';
-
-    cardTemplates.forEach((cardData, index) => {
+    // Get sorted cards
+    const sortedCards = sortCardsForDisplay();
+    const cardsInAlbum = getCardsInAlbum();
+    
+    // Track if we need a separator
+    const hasCardsInAlbum = cardsInAlbum.size > 0;
+    const notInAlbumCount = sortedCards.filter(card => !cardsInAlbum.has(card.templateId)).length;
+    
+    sortedCards.forEach((cardData, displayIndex) => {
         const cardElement = document.createElement('div');
         cardElement.className = 'card';
-        cardElement.id = `instance-${index}`;
+        cardElement.id = `instance-${cardData.originalIndex}`;
         cardElement.dataset.templateId = cardData.templateId;
-        cardElement.dataset.cardType = cardData.cardType || cardData.name; // Store card type
+        cardElement.dataset.cardType = cardData.cardType || cardData.name;
         
-        cardElement.addEventListener('click', (e) => {
-            if (e.target === cardElement) { // Prevent drag interference
-                showCardDetail(cardData);
-            }
-        });
+        // Add "in-album" class if card is already placed
+        if (cardsInAlbum.has(cardData.templateId)) {
+            cardElement.classList.add('in-album');
+        }
         
-        inventoryBar.appendChild(cardElement);
-
-        // Add event listener for closing card detail modal
-        document.getElementById('close-card-detail').addEventListener('click', () => {
-            hideModal('card-detail-modal');
-        });
         // Add faction color class
         cardElement.classList.add(`faction-${cardData.faction}`);
         
-        // Add rarity class if exists
+        // Add rarity class
         if (cardData.rarity) {
             cardElement.classList.add(cardData.rarity);
         }
@@ -175,25 +177,44 @@ function renderInventory() {
         let raritySymbol = '';
         if (cardData.rarity === 'rare') raritySymbol = '⭐';
         else if (cardData.rarity === 'epic') raritySymbol = '🌟';
-        else if (cardData.rarity === 'legendary') raritySymbol = '🔥';
         
         // Card content
         cardElement.innerHTML = `
-            <div>${cardData.power}</div>
-            <div style="font-size: 0.6em;">${cardData.faction}</div>
-            ${raritySymbol ? `<div style="font-size: 0.5em; margin-top: 2px;">${raritySymbol}</div>` : ''}
+            <div style="font-weight: bold; font-size: 1.1em;">${cardData.power}</div>
+            <div style="font-size: 0.6em; margin-top: 2px;">${cardData.faction}</div>
+            ${raritySymbol ? `<div style="font-size: 0.5em; margin-top: 3px;">${raritySymbol}</div>` : ''}
         `;
         
         // Card tooltip
-        cardElement.title = `${cardData.name}\nPower: ${cardData.power}\nFaction: ${cardData.faction}${cardData.rarity ? `\nRarity: ${cardData.rarity}` : ''}`;
-        
+        const location = cardsInAlbum.has(cardData.templateId) ? ' (In Album)' : ' (Available)';
+        cardElement.title = `${cardData.name}${location}\nPower: ${cardData.power}\nFaction: ${cardData.faction}${cardData.rarity ? `\nRarity: ${cardData.rarity}` : ''}`;        
         // Drag and drop
         cardElement.draggable = true;
         cardElement.addEventListener('dragstart', handleDragStart);
         cardElement.addEventListener('dragend', handleDragEnd);
         
+        // Click for card details (if you implement this later)
+        cardElement.addEventListener('click', (e) => {
+            if (e.target === cardElement) {
+                // You can add card detail modal here if needed
+                console.log('Card clicked:', cardData);
+            }
+        });
         inventoryBar.appendChild(cardElement);
+        
+        // Add separator between available and in-album cards
+        if (hasCardsInAlbum && displayIndex === notInAlbumCount - 1 && notInAlbumCount > 0) {
+            const separator = document.createElement('div');
+            separator.className = 'inventory-separator';
+            inventoryBar.appendChild(separator);
+        }
     });
+    
+    // Update scroll indicators
+    updateScrollIndicators();
+    
+    // Update inventory count
+    updateInventoryCount();
 }
 
 function renderTasks() {
@@ -258,6 +279,213 @@ function showQuadrantWarning(quadrant, text, tooltip) {
     warning.title = tooltip;
     quadrant.appendChild(warning);
 }
+
+// Helper function to get cards currently placed in album
+function getCardsInAlbum() {
+    const cardsInAlbum = new Set();
+    
+    document.querySelectorAll('.quadrant .card').forEach(cardEl => {
+        const templateId = cardEl.dataset.templateId;
+        cardsInAlbum.add(templateId);
+    });
+    
+    return cardsInAlbum;
+}
+
+// ====================
+// INVENTORY IMPROVEMENTS
+// ====================
+
+// Update inventory count display
+function updateInventoryCount() {
+    const cardsInAlbum = getCardsInAlbum();
+    const availableCount = cardTemplates.filter(card => !cardsInAlbum.has(card.templateId)).length;
+    document.getElementById('available-count').textContent = availableCount;
+    
+    // Update the full inventory count text
+    const totalCards = cardTemplates.length;
+    const inAlbumCount = cardsInAlbum.size;
+    document.getElementById('inventory-count').textContent = 
+        `(${availableCount} available, ${inAlbumCount} in album, ${totalCards} total)`;
+}
+
+// Smart card sorting function
+function sortCardsForDisplay() {
+    const cardsInAlbum = getCardsInAlbum();
+    
+    // Filter cards if "Show Available Only" is enabled
+    let cardsToDisplay = [...cardTemplates];
+    if (showAvailableOnly) {
+        cardsToDisplay = cardsToDisplay.filter(card => !cardsInAlbum.has(card.templateId));
+    }
+    
+    // Separate cards into two groups
+    const notInAlbum = [];
+    const alreadyInAlbum = [];
+    
+    cardsToDisplay.forEach((card, originalIndex) => {
+        const cardWithIndex = { ...card, originalIndex };
+        
+        if (cardsInAlbum.has(card.templateId)) {
+            alreadyInAlbum.push(cardWithIndex);
+        } else {
+            notInAlbum.push(cardWithIndex);
+        }
+    });
+    
+    // Define sorting functions
+    const sortFunctions = {
+        'power-desc': (a, b) => b.power - a.power,
+        'power-asc': (a, b) => a.power - b.power,
+        'faction': (a, b) => {
+            const factions = ['Fire', 'Water', 'Earth', 'Wind'];
+            const factionDiff = factions.indexOf(a.faction) - factions.indexOf(b.faction);
+            return factionDiff !== 0 ? factionDiff : b.power - a.power;
+        },
+        'rarity': (a, b) => {
+            const rarityOrder = { 'epic': 3, 'rare': 2, 'common': 1, undefined: 0 };
+            const rarityDiff = (rarityOrder[b.rarity] || 0) - (rarityOrder[a.rarity] || 0);
+            return rarityDiff !== 0 ? rarityDiff : b.power - a.power;
+        }
+    };
+    
+    // Get the current sort function
+    const sortFunction = sortFunctions[currentSort] || sortFunctions['power-desc'];
+    
+    // Sort each group
+    notInAlbum.sort(sortFunction);
+    alreadyInAlbum.sort(sortFunction);
+    
+    // Return combined array (available first, then in-album)
+    return [...notInAlbum, ...alreadyInAlbum];
+}
+
+// Update scroll indicators
+function updateScrollIndicators() {
+    const inventoryBar = document.getElementById('inventory-bar');
+    const leftIndicator = document.querySelector('.left-indicator');
+    const rightIndicator = document.querySelector('.right-indicator');
+    const scrollHint = document.getElementById('scroll-hint');
+    
+    if (!inventoryBar || !leftIndicator || !rightIndicator) return;
+    
+    const isAtStart = inventoryBar.scrollLeft <= 10;
+    const isAtEnd = inventoryBar.scrollLeft + inventoryBar.clientWidth >= inventoryBar.scrollWidth - 10;
+    
+    // Show/hide indicators
+    leftIndicator.style.opacity = isAtStart ? '0' : '0.7';
+    rightIndicator.style.opacity = isAtEnd ? '0' : '0.7';
+    
+    // Update scroll hint
+    if (scrollHint) {
+        if (isAtStart && isAtEnd) {
+            scrollHint.style.display = 'none';
+        } else {
+            scrollHint.style.display = 'block';
+            if (isAtStart) {
+                scrollHint.textContent = '→ Scroll for more cards →';
+            } else if (isAtEnd) {
+                scrollHint.textContent = '← Scroll for more cards ←';
+            } else {
+                scrollHint.textContent = '← Scroll to see all cards →';
+            }
+        }
+    }
+}
+
+// Initialize sorting controls
+function initSortingControls() {
+    // Power sort button (toggles between desc and asc)
+    document.getElementById('sort-by-power').addEventListener('click', () => {
+        if (currentSort === 'power-desc') {
+            currentSort = 'power-asc';
+            document.querySelector('#sort-by-power .sort-arrow').textContent = '⬆';
+        } else {
+            currentSort = 'power-desc';
+            document.querySelector('#sort-by-power .sort-arrow').textContent = '⬇';
+        }
+        
+        // Update active state
+        document.querySelectorAll('.sort-button').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('sort-by-power').classList.add('active');
+        
+        renderInventory();
+    });
+    
+    // Faction sort button
+    document.getElementById('sort-by-faction').addEventListener('click', () => {
+        currentSort = 'faction';
+        
+        // Update active state
+        document.querySelectorAll('.sort-button').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('sort-by-faction').classList.add('active');
+        
+        renderInventory();
+    });
+    
+    // Rarity sort button
+    document.getElementById('sort-by-rarity').addEventListener('click', () => {
+        currentSort = 'rarity';
+        
+        // Update active state
+        document.querySelectorAll('.sort-button').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('sort-by-rarity').classList.add('active');
+        
+        renderInventory();
+    });
+    
+    // Show available only toggle
+    document.getElementById('show-available-only').addEventListener('click', () => {
+        showAvailableOnly = !showAvailableOnly;
+        
+        // Update button text
+        const button = document.getElementById('show-available-only');
+        const textSpan = button.querySelector('.sort-text');
+        textSpan.textContent = showAvailableOnly ? 'Show All' : 'Show Available';
+        
+        // Toggle active state
+        button.classList.toggle('active', showAvailableOnly);
+        
+        renderInventory();
+    });
+    
+    // Scroll indicators click handlers
+    document.querySelector('.left-indicator').addEventListener('click', () => {
+        const inventoryBar = document.getElementById('inventory-bar');
+        inventoryBar.scrollBy({ left: -200, behavior: 'smooth' });
+    });
+    
+    document.querySelector('.right-indicator').addEventListener('click', () => {
+        const inventoryBar = document.getElementById('inventory-bar');
+        inventoryBar.scrollBy({ left: 200, behavior: 'smooth' });
+    });
+    
+    // Update indicators on scroll
+    document.getElementById('inventory-bar').addEventListener('scroll', updateScrollIndicators);
+    
+    // Initial update
+    updateScrollIndicators();
+}
+
+// Update your existing initialization
+document.addEventListener('DOMContentLoaded', () => {
+    // Your existing initialization code...
+    
+    // Add new initialization after your existing setup
+    initSortingControls();
+    updateInventoryCount();
+    
+    // Update inventory count whenever stats update
+    const originalUpdateStats = updateStats;
+    updateStats = function() {
+        originalUpdateStats();
+        updateInventoryCount();
+        renderInventory(); // Re-render to update "in-album" status
+    };
+    
+    // Initial render
+    renderInventory();
+});
 
 // ====================
 // DRAG & DROP FUNCTIONS
@@ -407,6 +635,13 @@ function updateStats() {
     
     // Update task 3 progress
     updateTaskProgress('task3', 0);
+
+    updateInventoryCount();
+
+// And update the inventory display if cards might have moved
+    setTimeout(() => {
+        renderInventory();
+    }, 100);
 }
 
 // ====================
